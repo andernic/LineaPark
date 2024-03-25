@@ -20,7 +20,7 @@ def get_bridge_fee(wallet, net_src, net_dst):
 
 
 def get_open_balance_eth(wallet, net, gas_price, gas, fee, rem_mult):
-    balance_wei = net.web3.eth.get_balance(wallet.address)
+    balance_wei = net.get_balance_wei(wallet.address)
     optimism_l1_fee = 0
     open_balance = (balance_wei - (gas_price * gas)) - fee
 
@@ -35,7 +35,7 @@ def get_open_balance_eth(wallet, net, gas_price, gas, fee, rem_mult):
 
     if open_balance <= 0:
         need_gas = net.web3.from_wei((gas * gas_price) + fee + optimism_l1_fee + remains_wei, 'ether')
-        balance = net.web3.from_wei(net.web3.eth.get_balance(wallet.address), 'ether')
+        balance = net.web3.from_wei(net.get_balance_wei(wallet.address), 'ether')
         logger.cs_logger.info(f'Недостаточно средств для оплаты транзакции!')
         logger.cs_logger.info(f'Стоимость транзакции: {need_gas}')
         logger.cs_logger.info(f'Баланс кошелька:      {balance}')
@@ -47,7 +47,7 @@ def bridge_eth_build_txn(wallet, net_src, net_dst, value_wei, fee, gas_price, ga
     try:
         contract = net_src.web3.eth.contract(net_src.web3.to_checksum_address(net_src.router_eth_address),
                                              abi=ABIs.Stargate_router_ETH_ABI)
-        nonce = net_src.web3.eth.get_transaction_count(wallet.address)
+        nonce = net_src.get_nonce(wallet.address)
         min_amount = value_wei - int(value_wei * settings.slippage)
 
         dict_txn = {
@@ -77,10 +77,10 @@ def bridge_eth(wallet, net_src, net_dst, all_balance=False):
         script_time = datetime.datetime.now().strftime("%d-%m-%y %H:%M")
         logger.cs_logger.info(f'Делаем Stargate бридж ETH из {net_src.name} в {net_dst.name}')
 
-        balance_st_src = net_src.web3.eth.get_balance(wallet.address)
+        balance_st_src = net_src.get_balance_wei(wallet.address)
         balance_st_src_eth = net_src.web3.from_wei(balance_st_src, 'ether')
 
-        balance_st_dst = net_dst.web3.eth.get_balance(wallet.address)
+        balance_st_dst = net_dst.get_balance_wei(wallet.address)
         balance_st_dst_eth = net_src.web3.from_wei(balance_st_dst, 'ether')
 
         while trying is True:
@@ -88,7 +88,7 @@ def bridge_eth(wallet, net_src, net_dst, all_balance=False):
             gas = random.randint(int(net_src.bridge_gas[0] * gas_lim), int(net_src.bridge_gas[1] * gas_lim))
 
             gp_mult = helper.get_random_value(settings.random_mult[0], settings.random_mult[1], 2)
-            gas_price = int(net_src.web3.eth.gas_price * gp_mult)
+            gas_price = int(net_src.get_gas_price_wei() * gp_mult)
 
             open_balance = get_open_balance_eth(wallet, net_src, gas_price, gas, fee, rem_mult)
 
@@ -129,7 +129,7 @@ def bridge_eth(wallet, net_src, net_dst, all_balance=False):
                     wallet.bridge_sum += bridge_value_eth
                     wallet.wallet_num += 1
 
-                    balance_end_src = net_src.web3.eth.get_balance(wallet.address)
+                    balance_end_src = net_src.get_balance_wei(wallet.address)
                     balance_end_src_eth = net_src.web3.from_wei(balance_end_src, 'ether')
                     log = logger.LogBridge(wallet.wallet_num, net_src.name, net_dst.name, wallet.address, bridge_value_eth,
                                            txn_hash, balance_st_src_eth, balance_st_dst_eth,

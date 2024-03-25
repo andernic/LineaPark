@@ -36,6 +36,13 @@ def attest_a(wallet):
         token_auth = sign_in_message(wallet)
         txn_calldata = get_attest_data_humanity(token_auth)
         score = txn_calldata['message']['score']
+        if settings.trusta_a_replace_enable == 0:
+            method = txn_calldata['calldata']['data'][0:10]
+            if method == '0xecdbb4fd':
+                cs_logger.info(f'Аттестация уже пройдена, замена отключена, скипаем')
+                log = LogProof(wallet.index, wallet.address, 'Trusta A', 'Уже выполнена', score)
+                log.write_log()
+                return True
         if score != -1:
             cs_logger.info(f'Score кошелька равен {score}, аттестация не выполняется')
             log = LogProof(wallet.index, wallet.address, 'Trusta A', 'Не выполнялась', score)
@@ -61,3 +68,14 @@ def attest_a(wallet):
     except Exception as ex:
         cs_logger.info(f'Ошибка в (Trusta/attestA: attest_a) {ex.args}')
 
+
+def score_check(wallet):
+    try:
+        cs_logger.info(f'Проверяем баллы для аттестации Trusta Group A')
+        token_auth = sign_in_message(wallet)
+        txn_calldata = get_attest_data_humanity(token_auth)
+        score = txn_calldata['message']['score']
+        log = LogProof(wallet.index, wallet.address, 'Trusta A', 'Предварительная оценка', score)
+        log.write_log()
+    except Exception as ex:
+        cs_logger.info(f'Ошибка в (Trusta/attestA: score_check) {ex.args}')

@@ -8,6 +8,8 @@ import settings
 
 class Gamic(Quest):
     title = 'Делаем свап в Gamic'
+    contract_address = linea_net.web3.to_checksum_address('0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f')
+    method_id = '0xd0e30db0'
 
     def build_txn(self, wallet):
         try:
@@ -15,8 +17,8 @@ class Gamic(Quest):
                                                                settings.gamic_eth_value[1],
                                                                settings.gamic_eth_digs), 'ether')
             txn = get_txn_dict(wallet.address, linea_net, value_wei)
-            txn['to'] = linea_net.web3.to_checksum_address('0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f')
-            txn['data'] = '0xd0e30db0'
+            txn['to'] = self.contract_address
+            txn['data'] = self.method_id
             return txn
         except Exception as ex:
             cs_logger.info(f'Ошибка в (Gamic/swap: build_txn) {ex.args}')

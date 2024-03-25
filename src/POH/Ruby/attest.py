@@ -9,8 +9,17 @@ from src.ABIs import RubyScore_ABI
 
 
 contract_address = linea_net.web3.to_checksum_address('0xB9cC0Bb020cF55197C4C3d826AC87CAdba51f272')
-contract = linea_net.web3.eth.contract(linea_net.web3.to_checksum_address(contract_address),
-                                       abi=RubyScore_ABI)
+contract = linea_net.get_contract(linea_net.web3.to_checksum_address(contract_address), abi=RubyScore_ABI)
+
+
+def check_attest(wallet, token_auth):
+    url = f'https://rubyscore.io/api/attestation/check?wallet={wallet.address}&project=linea'
+    headers = {'Authorization': f'Bearer {token_auth}', 'Accept': 'application/json'}
+    r = requests.post(url, headers=headers)
+    if r.status_code == 200:
+        res = [r.json()]
+        attest_count = res[0]['result']['count']
+        return attest_count
 
 
 def get_score(wallet, token_auth):
@@ -55,6 +64,13 @@ def attest_ruby(wallet):
         cs_logger.info(f'Делаем аттестацию RubyScore Group B')
         token_auth = sign_in_message(wallet)
         score = get_score(wallet, token_auth)
+        attest_count = check_attest(wallet, token_auth)
+        if settings.ruby_replace_enable == 0:
+            if attest_count != 0:
+                cs_logger.info(f'Аттестация уже пройдена, замена отключена, скипаем')
+                log = LogProof(wallet.index, wallet.address, 'RubyScore', 'Уже выполнена', score)
+                log.write_log()
+                return True
         txn_calldata = get_attest_data(token_auth)
         if score < 15:
             cs_logger.info(f'Score кошелька равен {score}, аттестация не выполняется')
@@ -81,3 +97,13 @@ def attest_ruby(wallet):
     except Exception as ex:
         cs_logger.info(f'Ошибка в (Ruby/attest: attest) {ex.args}')
 
+
+def score_check(wallet):
+    try:
+        cs_logger.info(f'Проверяем баллы для аттестации RubyScore Group B')
+        token_auth = sign_in_message(wallet)
+        score = get_score(wallet, token_auth)
+        log = LogProof(wallet.index, wallet.address, 'RubyScore', 'Предварительная оценка', score)
+        log.write_log()
+    except Exception as ex:
+        cs_logger.info(f'Ошибка в (Ruby/attest: score_check) {ex.args}')

@@ -1,11 +1,16 @@
 import settings
 from web3 import Web3
+from random import choice
+import time
 
 
 class Network(object):
-    def __init__(self, name, rpc, chain_id_l0, transfer, bridge_gas, router_eth_address, router_address, chain_okx):
+    def __init__(self, name, rpc_list, chain_id_l0, transfer, bridge_gas, router_eth_address, router_address, chain_okx):
         self.name = name
-        self.web3 = Web3(Web3.HTTPProvider(rpc))
+        self.rpc_list = rpc_list
+        self.web3_list = list()
+        self.get_web3_list()
+        self.web3 = choice(self.web3_list)
         self.chain_id = self.web3.eth.chain_id
         self.chain_id_l0 = chain_id_l0
         self.transfer = transfer
@@ -14,12 +19,51 @@ class Network(object):
         self.router_address = router_address
         self.chain_okx = chain_okx
 
+    def choice_web3(self):
+        conn = False
+        while conn is False:
+            web3 = choice(self.web3_list)
+            conn = web3.is_connected()
+            if conn is True:
+                self.web3 = web3
+
+    def get_web3_list(self):
+        web3_list = list()
+        for rpc in self.rpc_list:
+            try:
+                web3 = Web3(Web3.HTTPProvider(rpc))
+                if web3.is_connected() is True:
+                    web3_list.append(web3)
+            except Exception:
+                pass
+        self.web3_list = web3_list
+
+    def get_gas_price_wei(self):
+        self.choice_web3()
+        gas_price = self.web3.eth.gas_price
+        return gas_price
+
+    def get_balance_wei(self, address):
+        self.choice_web3()
+        balance = self.web3.eth.get_balance(address)
+        return balance
+
+    def get_nonce(self, address):
+        self.choice_web3()
+        nonce = self.web3.eth.get_transaction_count(address)
+        return nonce
+
+    def get_contract(self, contract_address, abi):
+        self.choice_web3()
+        contract = self.web3.eth.contract(Web3.to_checksum_address(contract_address), abi=abi)
+        return contract
+
 
 networks = list()
 
 linea_net = Network(
     name='Linea',
-    rpc=settings.linea_rpc,
+    rpc_list=settings.linea_rpc,
     chain_id_l0=183,
     transfer=[80_000, 150_000],
     bridge_gas=[700_000, 900_000],
@@ -30,7 +74,7 @@ linea_net = Network(
 
 ethereum_net = Network(
     name='Ethereum',
-    rpc=settings.ethereum_rpc,
+    rpc_list=settings.ethereum_rpc,
     chain_id_l0=101,
     transfer=[80_000, 150_000],
     bridge_gas=[580_000, 650_000],
@@ -41,7 +85,7 @@ ethereum_net = Network(
 
 arbitrum_net = Network(
     name='Arbitrum',
-    rpc=settings.arbitrum_rpc,
+    rpc_list=settings.arbitrum_rpc,
     chain_id_l0=110,
     transfer=[600_000, 1_500_000],
     bridge_gas=[4_000_000, 5_000_000],
@@ -52,7 +96,7 @@ arbitrum_net = Network(
 
 optimism_net = Network(
         name='Optimism',
-        rpc=settings.optimism_rpc,
+        rpc_list=settings.optimism_rpc,
         chain_id_l0=111,
         transfer=[80_000, 150_000],
         bridge_gas=[700_000, 900_000],

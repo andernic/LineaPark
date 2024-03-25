@@ -6,12 +6,14 @@ from src.Quests.questHelper import Quest
 
 class OmniZone(Quest):
     title = 'Минтим OmniZone'
+    contract_address = linea_net.web3.to_checksum_address('0x7136Abb0fa3d88E4B4D4eE58FC1dfb8506bb7De7')
+    method_id = '0x1249c58b'
 
     def build_txn(self, wallet):
         try:
             txn = get_txn_dict(wallet.address, linea_net)
-            txn['to'] = linea_net.web3.to_checksum_address('0x7136Abb0fa3d88E4B4D4eE58FC1dfb8506bb7De7')
-            txn['data'] = '0x1249c58b'
+            txn['to'] = self.contract_address
+            txn['data'] = self.method_id
             return txn
         except Exception as ex:
             cs_logger.info(f'Ошибка в (OmniZone/mint: build_txn) {ex.args}')

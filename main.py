@@ -15,7 +15,8 @@ from src.POH.proofOps import proof_op
 
 
 logger.create_xml()
-settings.last_row = logger.get_last_row_overall()
+settings.last_row = logger.get_last_row_overall('Overall')
+settings.last_row_poh = logger.get_last_row_overall('POH attestations')
 wallets = helper.read_wallets()
 net_src = nt.arbitrum_net
 
@@ -26,7 +27,7 @@ def main():
         random.shuffle(wallets)
     for wallet in wallets:
         op += 1
-        balance_st = nt.linea_net.web3.from_wei(nt.linea_net.web3.eth.get_balance(wallet.address), 'ether')
+        balance_st = nt.linea_net.web3.from_wei(nt.linea_net.get_balance_wei(wallet.address), 'ether')
         logger.cs_logger.info(f'')
         logger.cs_logger.info(
             f'№ {op} ({wallet.wallet_num})  Адрес: {wallet.address}  Биржа: {wallet.exchange_address}')
@@ -41,8 +42,8 @@ def main():
                     logger.cs_logger.info(f'{res}')
                     logger.cs_logger.info(f'Доп попытка вывода')
 
-        balance_end = nt.linea_net.web3.from_wei(nt.linea_net.web3.eth.get_balance(wallet.address), 'ether')
-        nonce = nt.linea_net.web3.eth.get_transaction_count(wallet.address)
+        balance_end = nt.linea_net.web3.from_wei(nt.linea_net.get_balance_wei(wallet.address), 'ether')
+        nonce = nt.linea_net.get_nonce(wallet.address)
         logger.write_overall(wallet, balance_st, balance_end, script_time, nonce)
 
         modules = get_modules_list()
@@ -55,8 +56,8 @@ def main():
         # Транзакции POH
         proof_op(wallet)
 
-        balance_end = nt.linea_net.web3.from_wei(nt.linea_net.web3.eth.get_balance(wallet.address), 'ether')
-        nonce = nt.linea_net.web3.eth.get_transaction_count(wallet.address)
+        balance_end = nt.linea_net.web3.from_wei(nt.linea_net.get_balance_wei(wallet.address), 'ether')
+        nonce = nt.linea_net.get_nonce(wallet.address)
         logger.write_overall(wallet, balance_st, balance_end, script_time, nonce)
 
         # Депозит на биржу или бридж
@@ -64,8 +65,8 @@ def main():
             if settings.switch_bridge_exc == 0:
                 # Трансфер средств на адрес биржи в Linea
                 okxOp.deposit(wallet, nt.linea_net)
-                balance_end = nt.linea_net.web3.from_wei(nt.linea_net.web3.eth.get_balance(wallet.address), 'ether')
-                nonce = nt.linea_net.web3.eth.get_transaction_count(wallet.address)
+                balance_end = nt.linea_net.web3.from_wei(nt.linea_net.get_balance_wei(wallet.address), 'ether')
+                nonce = nt.linea_net.get_nonce(wallet.address)
                 logger.rewrite_overall(wallet, balance_end, nonce)
 
             if settings.switch_bridge_exc == 1:
@@ -74,8 +75,8 @@ def main():
                 result = stargateBridge.bridge_eth(wallet, nt.linea_net, net_src, True)
 
                 if result is True:
-                    balance_end = nt.linea_net.web3.from_wei(nt.linea_net.web3.eth.get_balance(wallet.address), 'ether')
-                    nonce = nt.linea_net.web3.eth.get_transaction_count(wallet.address)
+                    balance_end = nt.linea_net.web3.from_wei(nt.linea_net.get_balance_wei(wallet.address), 'ether')
+                    nonce = nt.linea_net.get_nonce(wallet.address)
                     logger.rewrite_overall(wallet, balance_end, nonce)
                     # Трансфер средств на адрес биржи в Arbitrum или Optimism
                     okxOp.deposit(wallet, net_src)
@@ -90,7 +91,7 @@ def main():
 logger.cs_logger.info(f'Найдено кошельков: {len(wallets)}')
 userHelper.get_info(wallets)
 if settings.start_flag is True:
-    gPC.check_gas_price_ether()
+    gPC.check_gas_price_net()
     check_thread = Thread(target=gPC.checking, args=(), daemon=True)
     main_thread = Thread(target=main, args=())
     check_thread.start()

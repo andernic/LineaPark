@@ -1,6 +1,6 @@
-from src.POH.Trusta.attestA import attest_a
-from src.POH.Trusta.attestB import attest_b
-from src.POH.Ruby.attest import attest_ruby
+from src.POH.Trusta.attestA import attest_a, score_check as trust_a_check
+from src.POH.Trusta.attestB import attest_b, score_check as trust_b_check
+from src.POH.Ruby.attest import attest_ruby, score_check as ruby_check
 import settings
 from random import shuffle
 from src.Helpers.gasPriceChecker import check_limit
@@ -14,7 +14,7 @@ def proof_op(wallet):
             proof_list.append('trustaA')
             shuffle(proof_list)
 
-        if settings.trusta_a_switch == 1:
+        if settings.trusta_b_switch == 1:
             proof_list.append('trustaB')
             shuffle(proof_list)
 
@@ -34,3 +34,8 @@ def proof_op(wallet):
             if attest == 'ruby':
                 check_limit()
                 attest_ruby(wallet)
+
+    if settings.poh_enable == 2:
+        trust_a_check(wallet)
+        trust_b_check(wallet)
+        ruby_check(wallet)

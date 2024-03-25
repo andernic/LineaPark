@@ -5,13 +5,15 @@ from src.Quests.questHelper import Quest
 
 
 class GamerBoomMint(Quest):
-    title = 'Минтим GamerBoom'
+    title = 'Минтим GamerBoom Nft'
+    contract_address = linea_net.web3.to_checksum_address('0xc0B4ab5CB0Fdd6f5DFddb2F7C10c4c6013F97bF2')
+    method_id = '0x1249c58b'
 
     def build_txn(self, wallet):
         try:
             txn = get_txn_dict(wallet.address, linea_net)
-            txn['to'] = linea_net.web3.to_checksum_address('0xc0B4ab5CB0Fdd6f5DFddb2F7C10c4c6013F97bF2')
-            txn['data'] = '0x1249c58b'
+            txn['to'] = self.contract_address
+            txn['data'] = self.method_id
             return txn
         except Exception as ex:
             cs_logger.info(f'Ошибка в (GamerBoom/mint: build_txn) {ex.args}')

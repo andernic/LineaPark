@@ -18,10 +18,10 @@ def get_optimism_l1_fee(net, txn_data):
 
 def build_transfer_txn(wallet, net, value, gas, gas_price):
     try:
-        nonce = net.web3.eth.get_transaction_count(wallet.address)
+        nonce = net.get_nonce()
 
         txn = {
-            'chainId': net.web3.eth.chain_id,
+            'chainId': net.chain_id,
             'from': wallet.address,
             'to': wallet.exchange_address,
             'value': value,
@@ -37,7 +37,7 @@ def build_transfer_txn(wallet, net, value, gas, gas_price):
 
 def withdraw(wallet, net):
     wd_value = 0
-    balance_st = net.web3.eth.get_balance(wallet.address)
+    balance_st = net.get_balance_wei(wallet.address)
 
     exc_balance, res = exc.get_balance_master()
     wallet.exc_bal_st = float(exc_balance)
@@ -85,9 +85,9 @@ def deposit(wallet, net):
     while trying is True:
         gas = random.randint(net.transfer[0], net.transfer[1])
         gp_mult = helper.get_random_value(settings.random_mult[0], settings.random_mult[1], 2)
-        gas_price = int(net.web3.eth.gas_price * gp_mult)
+        gas_price = int(net.get_gas_price_wei() * gp_mult)
 
-        balance = net.web3.eth.get_balance(wallet.address)
+        balance = net.get_balance_wei(wallet.address)
         remains = helper.get_random_value(settings.exc_remains[0], settings.exc_remains[1], settings.rem_digs)
         wl_rem = helper.get_random_value(settings.deposit_remains[0], settings.deposit_remains[1], settings.deposit_digs)
         wl_rem_wei = net.web3.to_wei(wl_rem, 'ether')

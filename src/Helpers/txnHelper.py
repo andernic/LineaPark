@@ -10,7 +10,7 @@ Gas_oracle_address = '0x420000000000000000000000000000000000000F'
 
 def get_txn_dict(address, network, value=0):
     gas_price = get_gas_price(network)
-    nonce = network.web3.eth.get_transaction_count(address)
+    nonce = network.get_nonce(address)
     dict_transaction = {
         'chainId': network.chain_id,
         'from': address,
@@ -24,13 +24,14 @@ def get_txn_dict(address, network, value=0):
 
 def get_gas_price(network):
     gas_price_mult = helper.get_random_value(settings.gas_price_mult[0], settings.gas_price_mult[1], 3)
-    gas_price = int(network.web3.eth.gas_price * gas_price_mult)
+    gas_price = int(network.get_gas_price_wei() * gas_price_mult)
     return gas_price
 
 
 def check_tx_status(txn_hash, net, sec=3):
     status = None
     while status is None:
+        net.choice_web3()
         txn_done = net.web3.eth.wait_for_transaction_receipt(txn_hash, 60 * 5)
         status = txn_done.get('status')
         time.sleep(sec)
@@ -45,8 +46,8 @@ def approve_amount(private_key, address, spender_address, token_contract, net, t
         if allowance < token_amount:
             logger.cs_logger.info(f'Даем разрешение смартконтракту использовать токен')
 
-            nonce = net.web3.eth.get_transaction_count(address)
-            gas_price = net.web3.eth.gas_price
+            nonce = net.get_nonce(address)
+            gas_price = get_gas_price(net)
 
             dict_transaction_approve = {
                 'from': address,
@@ -63,7 +64,7 @@ def approve_amount(private_key, address, spender_address, token_contract, net, t
             estimate_gas = check_estimate_gas(txn_approve, net)
             txn_approve['gas'] = estimate_gas
 
-            txn_hash, txn_status = exec_txn(private_key, txn_approve, net,)
+            txn_hash, txn_status = exec_txn(private_key, txn_approve, net)
             return txn_hash
     except Exception as ex:
         logger.cs_logger.info(f'Ошибка в (txnHelper: approve_amount): {ex.args}')
@@ -71,6 +72,7 @@ def approve_amount(private_key, address, spender_address, token_contract, net, t
 
 def check_estimate_gas(txn, net):
     try:
+        net.choice_web3()
         gas_mult = helper.get_random_value(settings.gas_mult[0], settings.gas_mult[1], 3)
         estimate_gas = int(net.web3.eth.estimate_gas(txn) * gas_mult)
         return estimate_gas
@@ -81,6 +83,7 @@ def check_estimate_gas(txn, net):
 def exec_txn(private_key, txn, net):
     try:
         if settings.test_mode == 0:
+            net.choice_web3()
             signed_txn = net.web3.eth.account.sign_transaction(txn, private_key)
             txn_hash = net.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
             check_tx_status(txn_hash, net, 3)

@@ -88,18 +88,18 @@ class LogProof(object):
                 log_file = settings.log_file
                 workbook = openpyxl.load_workbook(log_file)
                 worksheet = workbook['POH attestations']
-                last_row = worksheet.max_row
-                worksheet.cell(row=1 + self.index, column=1).value = self.index
-                worksheet.cell(row=1 + self.index, column=2).value = self.address
+                last_row = settings.last_row_poh
+                worksheet.cell(row=last_row + self.index, column=1).value = self.index
+                worksheet.cell(row=last_row + self.index, column=2).value = self.address
                 if self.proof_type == 'Trusta A':
-                    worksheet.cell(row=1 + self.index, column=3).value = self.txn_hash
-                    worksheet.cell(row=1 + self.index, column=4).value = self.score
+                    worksheet.cell(row=last_row + self.index, column=3).value = self.txn_hash
+                    worksheet.cell(row=last_row + self.index, column=4).value = self.score
                 if self.proof_type == 'Trusta B':
-                    worksheet.cell(row=1 + self.index, column=5).value = self.txn_hash
-                    worksheet.cell(row=1 + self.index, column=6).value = self.score
+                    worksheet.cell(row=last_row + self.index, column=5).value = self.txn_hash
+                    worksheet.cell(row=last_row + self.index, column=6).value = self.score
                 if self.proof_type == 'RubyScore':
-                    worksheet.cell(row=1 + self.index, column=7).value = self.txn_hash
-                    worksheet.cell(row=1 + self.index, column=8).value = self.score
+                    worksheet.cell(row=last_row + self.index, column=7).value = self.txn_hash
+                    worksheet.cell(row=last_row + self.index, column=8).value = self.score
                 workbook.save(log_file)
                 workbook.close()
                 break
@@ -108,10 +108,10 @@ class LogProof(object):
                 input("")
 
 
-def get_last_row_overall():
+def get_last_row_overall(sheet):
     log_file = settings.log_file
     workbook = openpyxl.load_workbook(log_file)
-    worksheet = workbook['Overall']
+    worksheet = workbook[sheet]
     last_row = worksheet.max_row
     return last_row
 

@@ -56,7 +56,7 @@ def read_wallets():
 def check_balance_change(wallet, balance, net_dst, timeout, period=20):
     end_time = time.time() + timeout
     while time.time() < end_time:
-        new_balance = net_dst.web3.eth.get_balance(wallet.address)
+        new_balance = net_dst.get_balance_wei(wallet.address)
         if balance == new_balance:
             time.sleep(period)
         else:

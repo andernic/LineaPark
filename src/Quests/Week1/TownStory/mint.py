@@ -7,13 +7,11 @@ from src.ABIs import TownStory_ABI
 from src.Quests.Week1.TownStory.sign import get_message, get_txn_signature
 
 
-contract_address = linea_net.web3.to_checksum_address('0x281A95769916555D1C97036E0331b232b16EdABC')
-contract = linea_net.web3.eth.contract(linea_net.web3.to_checksum_address(contract_address),
-                                       abi=TownStory_ABI)
-
-
 class TownStory(Quest):
     title = 'Минтим TownStory'
+    contract_address = linea_net.web3.to_checksum_address('0x281A95769916555D1C97036E0331b232b16EdABC')
+    contract = linea_net.get_contract(contract_address, abi=TownStory_ABI)
+    method_id = '0xf160619b'
 
     def build_txn(self, wallet):
         try:
@@ -21,7 +19,7 @@ class TownStory(Quest):
             message_signature = sign_msg(wallet, message_text, linea_net)
             signature, deadline = get_txn_signature(wallet, message_signature)
             txn_dict = get_txn_dict(wallet.address, linea_net)
-            txn = contract.functions.createAccountSign(
+            txn = self.contract.functions.createAccountSign(
                 signature, 0, deadline
             ).build_transaction(txn_dict)
             return txn

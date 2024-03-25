@@ -12,8 +12,7 @@ from src.Helpers.helper import get_curr_time, delay_sleep, get_price
 
 swap_contract_address = '0x032b241De86a8660f1Ae0691a4760B426EA246d7'
 
-contract_swap = linea_net.web3.eth.contract(linea_net.web3.to_checksum_address(swap_contract_address),
-                                            abi=iZUMi_Swap_ABI)
+contract_swap = linea_net.get_contract(linea_net.web3.to_checksum_address(swap_contract_address), abi=iZUMi_Swap_ABI)
 pool_address = '0x0A3BB08b3a15A19b4De82F8AcFc862606FB69A2D'
 
 
@@ -69,7 +68,7 @@ def build_txn_swap_out(wallet, value_token_wei):
         usdc_address = USDC_token.address
         weth_address = wETH_token.address
 
-        path_str = (usdc_address.removeprefix('0x') + '0001f4' + weth_address.removeprefix('0x'))
+        path_str = (usdc_address.removeprefix('0x') + '000bb8' + weth_address.removeprefix('0x'))
         path = bytes.fromhex(path_str)
 
         contract_code = eth_abi.encode(
@@ -98,7 +97,7 @@ def swap_eth_to_usdc(wallet, swap_value_eth):
         script_time = get_curr_time()
 
         logger.cs_logger.info(f'#   Свапаем {swap_value_eth} ETH через iZUMiSwap')
-        balance_start_eth = linea_net.web3.from_wei(linea_net.web3.eth.get_balance(address), 'ether')
+        balance_start_eth = linea_net.web3.from_wei(linea_net.get_balance_wei(address), 'ether')
         balance_start_token = contract_USDC.functions.balanceOf(address).call() / 10 ** 6
 
         txn_swap = build_txn_swap_in(wallet, swap_value_eth)
@@ -113,7 +112,7 @@ def swap_eth_to_usdc(wallet, swap_value_eth):
             delay_sleep(settings.txn_delay[0], settings.txn_delay[1])
 
             wallet.txn_num += 1
-            balance_end_eth = linea_net.web3.from_wei(linea_net.web3.eth.get_balance(address), 'ether')
+            balance_end_eth = linea_net.web3.from_wei(linea_net.get_balance_wei(address), 'ether')
             balance_end_token = contract_USDC.functions.balanceOf(address).call() / 10 ** 6
 
             log = logger.LogSwap(wallet.wallet_num, wallet.txn_num, address, 'iZUMi', swap_value_eth,
@@ -132,7 +131,7 @@ def swap_usdc_to_eth(wallet, value_token_wei):
         script_time = get_curr_time()
         if value_token_wei != 0:
             logger.cs_logger.info(f'#   Свапаем {value_token_wei / 10 ** 6} USDC через iZUMiSwap')
-            balance_start_eth = linea_net.web3.from_wei(linea_net.web3.eth.get_balance(address), 'ether')
+            balance_start_eth = linea_net.web3.from_wei(linea_net.get_balance_wei(address), 'ether')
             balance_start_token = contract_USDC.functions.balanceOf(address).call() / 10 ** 6
 
             approve_amount(key, address, swap_contract_address, contract_USDC, linea_net, value_token_wei)
@@ -148,7 +147,7 @@ def swap_usdc_to_eth(wallet, value_token_wei):
                 delay_sleep(settings.txn_delay[0], settings.txn_delay[1])
 
                 wallet.txn_num += 1
-                balance_end_eth = linea_net.web3.from_wei(linea_net.web3.eth.get_balance(address), 'ether')
+                balance_end_eth = linea_net.web3.from_wei(linea_net.get_balance_wei(address), 'ether')
                 balance_end_token = contract_USDC.functions.balanceOf(address).call() / 10 ** 6
                 log = logger.LogSwap(wallet.wallet_num, wallet.txn_num, address, 'iZUMi',
                                      value_token_wei / 10 ** 6, txn_hash,
